@@ -31,7 +31,10 @@ socket.on('data', (data) => {
         if (line === '') continue;
         if (!loggedIn) {
             process.stdout.write(line + '\n');
-            if (line.startsWith('Üdvözlünk,')) {
+            // Állapotváltozás a szerver üzenetei alapján
+            if (line.startsWith('Kérem a jelszót!:')) {
+                state = 'password';
+            } else if (line.startsWith('Üdvözlünk,')) {
                 loggedIn = true;
                 state = 'chat';
             }
@@ -44,7 +47,7 @@ socket.on('data', (data) => {
 rl.on('line', (input) => {
     if (!loggedIn) {
         if (state === 'username') {
-            username = input;
+            username = input; 
         }
         socket.write(input + '\n');
     } else {
@@ -53,7 +56,12 @@ rl.on('line', (input) => {
             process.exit();
         } else {
             socket.write(input + '\n');
-            const formatted = input.replace(/:-\)/g, '😊');
+            const formatted = input.replace(/:-\)/g, '😊')
+                                    .replace(/:-D/g, '😃')
+                                    .replace(/:-P/g, '😛')
+                                    .replace(/:-\(/g, '😞')
+                                    .replace(/:3/g, '😊')
+                                    .replace(/<3/g, '❤️');
             console.log(`<${username}> ${formatted}`);
         }
     }
