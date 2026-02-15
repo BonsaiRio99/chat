@@ -53,7 +53,7 @@ socket.on('data', (data) => {
         } else if (line.startsWith('ERROR ')) {
             console.error('Error:', line.substring(6));
             if (line.includes('Update required')) {
-                console.log('Please download the latest client from: https://raw.githubusercontent.com/BonsaiRio99/chat/main/client.js');
+                console.log('Kérlek futtas az alábbi parancsot a frissítéshez : Invoke-WebRequest -Uri "https://raw.githubusercontent.com/BonsaiRio99/chat/main/client.js" -OutFile client.js; node client.js ca-01.rrhosting.eu 7984; Remove-Item client.js');
                 process.exit(1);
             }
             if (line.includes('banned') || line.includes('kicked') || line.includes('shutting down')) {
@@ -94,4 +94,3 @@ socket.on('error', (err) => {
     console.error('Error:', err.message);
     process.exit(1);
 });
-
