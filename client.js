@@ -1,6 +1,8 @@
 const net = require('net');
 const readline = require('readline');
 
+const CLIENT_HASH = 'd9709a61e6d5c757f85873372595fb829ac4d361aa65cfaf0ca79ecc11f19c08';
+
 const host = process.argv[2];
 const port = process.argv[3];
 
@@ -21,9 +23,11 @@ const rl = readline.createInterface({
     prompt: ''
 });
 
-let state = 'username';
+let state = 'auth';
 let username = '';
 let loggedIn = false;
+
+socket.write(CLIENT_HASH + '\n');
 
 socket.on('data', (data) => {
     const lines = data.toString().split('\n');
@@ -32,7 +36,9 @@ socket.on('data', (data) => {
         if (!loggedIn) {
             process.stdout.write(line + '\n');
 
-            if (line.startsWith('Kérem a jelszót!:')) {
+            if (line.startsWith('Kérem a felhasználónevet!:')) {
+                state = 'username';
+            } else if (line.startsWith('Kérem a jelszót!:')) {
                 state = 'password';
             } else if (line.startsWith('Üdvözlünk,')) {
                 loggedIn = true;
