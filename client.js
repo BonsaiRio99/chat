@@ -9,8 +9,11 @@ if (!host || !port) {
     process.exit(1);
 }
 
+const CLIENT_SECRET = 'virágfül';
+
 const socket = tls.connect(port, host, { rejectUnauthorized: false }, () => {
     console.log('Csatlakozva a szerverhez (TLS).');
+    socket.write(CLIENT_SECRET + '\n');
 });
 
 socket.setEncoding('utf8');
@@ -38,7 +41,7 @@ socket.on('data', (data) => {
             process.stdout.write('Jelszó: ');
         } else if (line.startsWith('INFO ')) {
             console.log(line.substring(5));
-            if (line.includes('Üdvözlünk,')) loggedIn = true;
+            if (line.includes('Welcome,')) loggedIn = true;
         } else if (line.startsWith('HIST ')) {
             console.log(line.substring(5));
         } else if (line.startsWith('MSG ')) {
@@ -48,8 +51,14 @@ socket.on('data', (data) => {
         } else if (line.startsWith('PART ')) {
             console.log(line.substring(5));
         } else if (line.startsWith('ERROR ')) {
-            console.error('Hiba:', line.substring(6));
-            if (line.includes('Ki lettél')) socket.end();
+            console.error('Error:', line.substring(6));
+            if (line.includes('Update required')) {
+                console.log('Please download the latest client from: https://raw.githubusercontent.com/BonsaiRio99/chat/main/client.js');
+                process.exit(1);
+            }
+            if (line.includes('banned') || line.includes('kicked') || line.includes('shutting down')) {
+                socket.end();
+            }
         } else {
             console.log(line);
         }
@@ -77,11 +86,11 @@ rl.on('line', (input) => {
 });
 
 socket.on('end', () => {
-    console.log('Kapcsolat bontva.');
+    console.log('Connection closed.');
     process.exit();
 });
 
 socket.on('error', (err) => {
-    console.error('Hiba:', err.message);
+    console.error('Error:', err.message);
     process.exit(1);
 });
