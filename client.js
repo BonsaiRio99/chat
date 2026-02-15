@@ -1,7 +1,5 @@
-const net = require('net');
+const tls = require('tls');
 const readline = require('readline');
-
-const CLIENT_HASH = 'd9709a61e6d5c757f85873372595fb829ac4d361aa65cfaf0ca79ecc11f19c08';
 
 const host = process.argv[2];
 const port = process.argv[3];
@@ -11,8 +9,8 @@ if (!host || !port) {
     process.exit(1);
 }
 
-const socket = net.createConnection(port, host, () => {
-    console.log('Csatlakozva a szerverhez.');
+const socket = tls.connect(port, host, { rejectUnauthorized: false }, () => {
+    console.log('Csatlakozva a szerverhez (TLS).');
 });
 
 socket.setEncoding('utf8');
@@ -23,27 +21,35 @@ const rl = readline.createInterface({
     prompt: ''
 });
 
-let state = 'auth';
+let state = 'username';
 let username = '';
 let loggedIn = false;
-
-socket.write(CLIENT_HASH + '\n');
 
 socket.on('data', (data) => {
     const lines = data.toString().split('\n');
     for (let line of lines) {
         if (line === '') continue;
-        if (!loggedIn) {
-            process.stdout.write(line + '\n');
 
-            if (line.startsWith('Kérem a felhasználónevet!:')) {
-                state = 'username';
-            } else if (line.startsWith('Kérem a jelszót!:')) {
-                state = 'password';
-            } else if (line.startsWith('Üdvözlünk,')) {
-                loggedIn = true;
-                state = 'chat';
-            }
+        if (line.startsWith('PROMPT_USERNAME')) {
+            state = 'username';
+            process.stdout.write('Felhasználónév: ');
+        } else if (line.startsWith('PROMPT_PASSWORD')) {
+            state = 'password';
+            process.stdout.write('Jelszó: ');
+        } else if (line.startsWith('INFO ')) {
+            console.log(line.substring(5));
+            if (line.includes('Üdvözlünk,')) loggedIn = true;
+        } else if (line.startsWith('HIST ')) {
+            console.log(line.substring(5));
+        } else if (line.startsWith('MSG ')) {
+            console.log(line.substring(4));
+        } else if (line.startsWith('JOIN ')) {
+            console.log(line.substring(5));
+        } else if (line.startsWith('PART ')) {
+            console.log(line.substring(5));
+        } else if (line.startsWith('ERROR ')) {
+            console.error('Hiba:', line.substring(6));
+            if (line.includes('Ki lettél')) socket.end();
         } else {
             console.log(line);
         }
@@ -52,9 +58,6 @@ socket.on('data', (data) => {
 
 rl.on('line', (input) => {
     if (!loggedIn) {
-        if (state === 'username') {
-            username = input; 
-        }
         socket.write(input + '\n');
     } else {
         if (input.trim() === '/quit') {
