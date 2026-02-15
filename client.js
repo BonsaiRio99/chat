@@ -31,7 +31,7 @@ socket.on('data', (data) => {
         if (line === '') continue;
         if (!loggedIn) {
             process.stdout.write(line + '\n');
-            // Állapotváltozás a szerver üzenetei alapján
+
             if (line.startsWith('Kérem a jelszót!:')) {
                 state = 'password';
             } else if (line.startsWith('Üdvözlünk,')) {
