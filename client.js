@@ -12,7 +12,7 @@ if (!host || !port) {
 const CLIENT_SECRET = 'virágfül';
 
 const socket = tls.connect(port, host, { rejectUnauthorized: false }, () => {
-    console.log('Csatlakozva a szerverhez (TLS).');
+    console.log('Csatlakozva a szerverhez.');
     socket.write(CLIENT_SECRET + '\n');
 });
 
@@ -94,3 +94,4 @@ socket.on('error', (err) => {
     console.error('Error:', err.message);
     process.exit(1);
 });
+
