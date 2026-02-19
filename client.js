@@ -5,7 +5,7 @@ const path = require('path');
 
 const host = 'ca-01.rrhosting.eu';
 const port = 7984;
-const CLIENT_SECRET = 'almafa';
+const CLIENT_SECRET = 'dhduewhfuii4378fgu3gw478ftgq348tfgu7q348tgfu7w3t4';
 
 let socket;
 let rl;
@@ -122,20 +122,6 @@ function createSocket() {
             } else if (line.startsWith('FILE_ERROR ')) {
                 writeMessage(`Hiba: ${line.substring(11)}`);
                 continue;
-            } else if (line.startsWith('FILEUPLOAD_REQUEST ')) {
-                const targetFilename = line.substring(19);
-                if (uploadInProgress) {
-                    writeMessage(`Feltöltés megkezdve: ${targetFilename}`);
-                }
-                continue;
-            } else if (line.startsWith('FILEUPLOAD_SUCCESS')) {
-                writeMessage('Feltöltés sikeres.');
-                uploadInProgress = false;
-                continue;
-            } else if (line.startsWith('FILEUPLOAD_ERROR ')) {
-                writeMessage(`Feltöltési hiba: ${line.substring(17)}`);
-                uploadInProgress = false;
-                continue;
             }
 
             if (!fileMode) {
@@ -251,37 +237,6 @@ rl.on('line', (input) => {
             socket.write('/back\n');
         } else if (input.trim() === '/quit') {
             socket.write('/quit\n');
-        } else if (input.trim().startsWith('/fileupload ')) {
-            const parts = input.trim().split(' ');
-            if (parts.length < 3) {
-                writeMessage('Használat: /fileupload <helyi fájl elérési út> <célfájlnév>');
-                return;
-            }
-            const localPath = parts[1];
-            const targetFilename = parts.slice(2).join(' ');
-            if (!fs.existsSync(localPath)) {
-                writeMessage('Helyi fájl nem található.');
-                return;
-            }
-            const stat = fs.statSync(localPath);
-            if (!stat.isFile()) {
-                writeMessage('A megadott elérési út nem fájl.');
-                return;
-            }
-            uploadInProgress = true;
-            writeMessage(`Fájl beolvasása: ${localPath}`);
-            const fileData = fs.readFileSync(localPath);
-            const base64 = fileData.toString('base64');
-            const size = base64.length;
-            socket.write(`/fileupload ${localPath} ${targetFilename}\n`);
-            setTimeout(() => {
-                socket.write(`FILEUPLOAD ${targetFilename} ${size}\n`);
-                for (let i = 0; i < size; i += 8000) {
-                    socket.write(`FILEUPLOAD_DATA ${base64.substr(i, 8000)}\n`);
-                }
-                socket.write('FILEUPLOAD_END\n');
-                writeMessage(`Feltöltés: ${targetFilename} (${fileData.length} byte)`);
-            }, 100);
         } else {
             socket.write(input + '\n');
         }
@@ -291,6 +246,10 @@ rl.on('line', (input) => {
         } else if (input.trim() === '/files') {
             socket.write('/files\n');
         } else {
+            if (input.trim() === '') {
+                rl.prompt();
+                return;
+            }
             socket.write(input + '\n');
             const formatted = input.replace(/:-\)/g, '😊').replace(/:-D/g, '😃').replace(/:-P/g, '😛').replace(/:-\(/g, '😞').replace(/:3/g, '😊').replace(/<3/g, '❤️');
             writeMessage(`<${username}> ${formatted}`);
